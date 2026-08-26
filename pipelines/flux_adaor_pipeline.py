@@ -58,10 +58,14 @@ class FluxAdaOrPipeline:
         self.pipeline.scheduler.set_timesteps(num_inference_steps, device=device)
         timesteps = self.pipeline.scheduler.timesteps
 
-        # Determine guidance argument requirement for FLUX transformer
+        # Handle FLUX transformer internal guidance embedding
         guidance = None
+        adaor_step_guidance = guidance_scale
         if getattr(self.pipeline.transformer.config, "guidance_embeds", False):
+            # Pass guidance_scale (3.5) into FLUX transformer internal guidance embedding
             guidance = torch.full((latents.shape[0],), guidance_scale, device=device, dtype=dtype)
+            # Since guidance is embedded into the transformer predictions, use 1.0 in AdaOr math to avoid double scaling
+            adaor_step_guidance = 1.0
 
         # 3. Custom Denoising Loop executing 3 forward passes per step
         for i, t in enumerate(timesteps):
@@ -101,7 +105,7 @@ class FluxAdaOrPipeline:
                 eps_edit=eps_edit,
                 eps_uncond=eps_uncond,
                 eps_identity=eps_identity,
-                guidance_scale=guidance_scale,
+                guidance_scale=adaor_step_guidance,
                 alpha=alpha
             )
 
