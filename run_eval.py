@@ -11,6 +11,12 @@ from pipelines.flux_adaor_pipeline import FluxAdaOrPipeline
 from evaluation.pie_bench_runner import load_dataset_stratified_pie_bench, run_stratified_pie_bench_eval
 
 def load_config(config_path: str = "configs/adaor_flux_config.yaml") -> dict:
+    if not os.path.isabs(config_path):
+        if not os.path.exists(config_path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            alt_path = os.path.join(script_dir, config_path)
+            if os.path.exists(alt_path):
+                config_path = alt_path
     if os.path.exists(config_path):
         with open(config_path, "r") as f:
             return yaml.safe_load(f) or {}
@@ -40,7 +46,8 @@ def run(
     seed: int = 42,
     prompt: Optional[str] = None,
     identity_prompt: Optional[str] = None,
-    unconditional_prompt: str = ""
+    unconditional_prompt: str = "",
+    overwrite: bool = True
 ):
     """
     Adaptive entrypoint to execute AdaOr evaluation sweeps on single prompts or stratified PIE-bench datasets.
@@ -50,7 +57,7 @@ def run(
     cfg_eval = cfg.get("evaluation", {})
 
     # Parameter resolution hierarchy: Direct Argument > Config YAML > Default
-    model_id = model_id or cfg_model.get("pretrained_model_name_or_path", "black-forest-labs/FLUX.1-schnell")
+    model_id = model_id or cfg_model.get("pretrained_model_name_or_path", "black-forest-labs/FLUX.1-dev")
     if quantize is None:
         quantize = cfg_model.get("quantize", False)
     
