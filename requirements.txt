@@ -1,0 +1,11 @@
+torch
+torchvision
+diffusers>=0.30.0
+transformers>=4.40.0
+accelerate
+bitsandbytes>=0.43.0
+pyyaml
+pandas
+pyarrow
+tqdm
+Pillow

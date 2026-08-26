@@ -1,0 +1,29 @@
+# --- Python & Environment ---
+__pycache__/
+*.py[cod]
+*$py.-38.pyc
+.venv/
+env/
+venv/
+*.env
+
+# --- Outputs & Benchmarks ---
+outputs/
+piebench_adaptive_outputs/
+adaor_outputs/
+*.zip
+*.tar.gz
+
+# --- Hugging Face & Model Caches ---
+.cache/
+huggingface/
+hub/
+*.safetensors
+*.ckpt
+*.pt
+
+# --- IDEs & OS Files ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
