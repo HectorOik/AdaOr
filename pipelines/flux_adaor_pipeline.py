@@ -3,6 +3,17 @@ from typing import Dict, Any, Optional
 from diffusers import FluxPipeline
 from methods.adaor_guidance import AdaOrGuidanceProcessor
 
+def calculate_shift(
+    image_seq_len: int,
+    base_seq_len: int = 256,
+    max_seq_len: int = 4096,
+    base_shift: float = 0.5,
+    max_shift: float = 1.15,
+) -> float:
+    m = (max_shift - base_shift) / (max_seq_len - base_seq_len)
+    b = base_shift - m * base_seq_len
+    return image_seq_len * m + b
+
 class FluxAdaOrPipeline:
     """
     Wrapper around the Hugging Face FLUX pipeline to inject AdaOr 
@@ -55,7 +66,20 @@ class FluxAdaOrPipeline:
             latents=None
         )
 
-        self.pipeline.scheduler.set_timesteps(num_inference_steps, device=device)
+        # Configure FlowMatchEulerDiscreteScheduler timesteps with mu for dynamic shifting
+        image_seq_len = (height // 16) * (width // 16)
+        mu = calculate_shift(
+            image_seq_len,
+            getattr(self.pipeline.scheduler.config, "base_image_seq_len", 256),
+            getattr(self.pipeline.scheduler.config, "max_image_seq_len", 4096),
+            getattr(self.pipeline.scheduler.config, "base_shift", 0.5),
+            getattr(self.pipeline.scheduler.config, "max_shift", 1.15),
+        )
+        try:
+            self.pipeline.scheduler.set_timesteps(num_inference_steps, device=device, mu=mu)
+        except (TypeError, ValueError):
+            self.pipeline.scheduler.set_timesteps(num_inference_steps, device=device)
+
         timesteps = self.pipeline.scheduler.timesteps
 
         # Handle FLUX transformer internal guidance embedding
